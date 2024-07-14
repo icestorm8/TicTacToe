@@ -1,0 +1,15 @@
+# Ignore compiled Python files
+*.pyc
+
+# Ignore build artifacts
+/build/
+/dist/
+/__pycache__/
+
+# Ignore generated files
+.DS_Store
+.vscode/
+.idea/
+.mypy_cache/
+.virtualenv/
+.egg-info/
