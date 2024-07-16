@@ -28,7 +28,7 @@ class Menu:
                 elif event.type == pygame.MOUSEBUTTONUP:  # occurs once when the mouse button is released
                     if self.start_button.mouseover():
                         print("starting")
-                        Game(self.screen)
+                        Game(self.screen).run()
             clock = pygame.time.Clock()  # creating a clock for the game
             self.display_text()
 

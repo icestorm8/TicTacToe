@@ -69,8 +69,4 @@ class Board:
             winner = True
             winning_player = player2
 
-        # if winner was found update its points
-        if winner:
-            winning_player.add_point()
-
         return winning_player

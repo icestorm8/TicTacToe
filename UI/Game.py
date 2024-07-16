@@ -5,36 +5,31 @@ from pygame import Vector2
 
 from Logic.Board import Board
 from Logic.Player import Player
+from UI.EndScreen import EndScreen
 
 
 class Game:
-    def __init__(self, screen):
+    def __init__(self, screen, player1: Player = Player("X", "player1"), player2: Player = Player("O", "player2")):
         self.board_arr = Board()
-        self.block_size = int(screen.get_width()/3)
+        self.block_size = int(screen.get_width() / 3)
+        # players:
         # player 1 = X
-        self.player1 = Player("X", "player1")
+        self.player1 = player1
         self.x_frames = [pygame.image.load(f'Assets/X_frames/x_{i}.png') for i in range(0, 9)]
         self.static_x = pygame.image.load("Assets/X_frames/x_8.png")
         self.static_x = pygame.transform.scale(self.static_x, (self.block_size, self.block_size))
 
-        # resized_image = pygame.transform.scale(image, (new_width, new_height))
         # player 2 = O
-        self.player2 = Player("O", "player2")
+        self.player2 = player2
         self.o_frames = [pygame.image.load(f'Assets/O_frames/o_{i}.png') for i in range(0, 11)]
         self.static_o = pygame.image.load("Assets/O_frames/o_10.png")
         self.static_o = pygame.transform.scale(self.static_o, (self.block_size, self.block_size))
-
-        self.animation_active = True
-        self.x_frame_index = 0
 
         # sounds
         self.good_move = pygame.mixer.Sound("Assets/Sounds/good.mp3")
         self.bad_move = pygame.mixer.Sound("Assets/Sounds/bad.mp3")
 
-        self.current_player = self.player1
-
-        self.screen = screen
-        self.running = True
+        # grids
         self.rects: [[pygame.rect]] = [[None, None, None], [None, None, None], [None, None, None]]
         self.animation_grid = [[{'animation': None, 'active': False, 'frame_index': 0},
                                 {'animation': None, 'active': False, 'frame_index': 0},
@@ -45,20 +40,36 @@ class Game:
                                [{'animation': None, 'active': False, 'frame_index': 0},
                                 {'animation': None, 'active': False, 'frame_index': 0},
                                 {'animation': None, 'active': False, 'frame_index': 0}]]
+
+        # custom events
         self.GRID_CLICKED = pygame.USEREVENT + 1
         self.GAME_OVER = pygame.USEREVENT + 2
         self.UPDATE_ANIMATION = pygame.USEREVENT + 3
-        # self.end_screen = EndScreen(self.screen)
-        while self.running:
+
+        # screens & settings
+        self.current_player = self.player1
+        self.screen = screen
+        self.endScreen = EndScreen(self.screen, self.player1, self.player2, self)
+        self.game_over = False
+        self.winner = None
+
+        self.screen.fill((255, 255, 255))
+
+    def run(self):
+        self.current_player = self.player1
+        while not self.game_over:
             # Did the user click the window close button?
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.game_over = True
+                        return
                 elif event.type == pygame.MOUSEBUTTONUP:
                     self.check_collision()
                 elif event.type == self.GRID_CLICKED:
-                    print(event.position)
                     cell_position = event.position
                     row, col = cell_position
                     # if move was successful - draw the move and switch players
@@ -72,37 +83,45 @@ class Game:
                 elif event.type == self.UPDATE_ANIMATION:
                     self.update_animations()
                 elif event.type == self.GAME_OVER:
-                    winner = event.winner
-                    if winner is self.player1:
+                    self.winner = event.winner
+                    if self.winner is self.player1:
                         print(f"{self.player1.name} won")
-                    elif winner is self.player2:
+                        self.player1.add_point()
+                    elif self.winner is self.player2:
                         print(f"{self.player2.name} won")
+                        self.player2.add_point()
                     else:
                         print("this was a tie! good job!")
-                    self.running = False
-                #     print("game is over!!!")
-                #     self.running = False
+                    self.game_over = True
 
             self.check_board()
-            # Fill the background
             self.draw_grid()
-
-            # self.screen.fill((0, 0, 0))
             pygame.display.update()
-        # Done! Time to quit.
-        # self.end_screen.run(self)
 
-    # this is used to restart the whole game, including the points (player names will stay the same and to change those
-    # user must go to menu
+        # Done! Time to quit.
+        action: str = self.endScreen.run(self.winner, self.screen)
+        print(action == "continue")
+        self.screen.fill((255, 255, 255))
+        if action == "continue":
+            self.continue_game()
+        elif action == "restart":
+            self.restart_game()
+        else:
+            return
+        self.run()
+
+
+    # # this is used to restart the whole game, including the points (player names will stay the same and to change those
+    # # user must go to menu
     def restart_game(self):
+        self.continue_game()
         self.player1.restart()
         self.player2.restart()
-        self.continue_game()
 
-    # the winner gets a point each round so continue is to keep playing
+    # # the winner gets a point each round so continue is to keep playing
     def continue_game(self):
         self.board_arr = Board()
-        self.running = True
+        self.game_over = False
         self.rects: [[pygame.rect]] = [[None, None, None], [None, None, None], [None, None, None]]
         self.animation_grid = [[{'animation': None, 'active': False, 'frame_index': 0},
                                 {'animation': None, 'active': False, 'frame_index': 0},
@@ -114,6 +133,8 @@ class Game:
                                 {'animation': None, 'active': False, 'frame_index': 0},
                                 {'animation': None, 'active': False, 'frame_index': 0}]]
         pygame.time.set_timer(self.UPDATE_ANIMATION, 0)
+
+
 
     def check_board(self):
         winner = self.board_arr.has_winner(self.player1, self.player2)
@@ -130,7 +151,7 @@ class Game:
         # block_size = int(self.screen.get_width()/3)  # Set the size of the grid block
         for x in range(0, 3):
             for y in range(0, 3):
-                rect = pygame.Rect(x*self.block_size, y*self.block_size, self.block_size, self.block_size)
+                rect = pygame.Rect(x * self.block_size, y * self.block_size, self.block_size, self.block_size)
                 pygame.draw.rect(self.screen, (0, 0, 0), rect, 5)
                 # row_index = x // block_size
                 # col_index = y // block_size
@@ -159,7 +180,8 @@ class Game:
                     # print(len(cell['animation']))
 
                     if cell['active']:
-                        scaled_image = pygame.transform.scale(cell['animation'][cell['frame_index']], (self.block_size, self.block_size))
+                        scaled_image = pygame.transform.scale(cell['animation'][cell['frame_index']],
+                                                              (self.block_size, self.block_size))
                         self.screen.blit(scaled_image,
                                          (self.rects[row][col]))
                         print(cell['frame_index'])
