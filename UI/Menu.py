@@ -2,6 +2,8 @@ import sys
 
 import pygame
 
+
+from UI.Game import Game
 from UI.Text import Text
 
 SCREEN_HEIGHT, SCREEN_WIDTH = 700, 700
@@ -25,9 +27,11 @@ class Menu:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONUP:  # occurs once when the mouse button is released
                     if self.start_button.mouseover():
-                        print("start")
+                        print("starting")
+                        Game(self.screen)
             clock = pygame.time.Clock()  # creating a clock for the game
             self.display_text()
+
             pygame.display.update()
 
         pygame.quit()
