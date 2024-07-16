@@ -15,8 +15,7 @@ class Menu:
         self.screen = pygame.display.set_mode([SCREEN_HEIGHT, SCREEN_WIDTH], pygame.RESIZABLE)  # creating a window
         self.header = Text(0, -300, self.screen, "Tic Tac Toe", 60)  # header
         self.footer = Text(0, 300, self.screen, "by shaked tamam 2024", 20)  # footer
-        self.start_button = Text(0, -100, self.screen, "start", 70) # start button
-
+        self.start_button = Text(0, -100, self.screen, "New Game", 70)  # start button
 
         running = True
         while running:
@@ -38,4 +37,3 @@ class Menu:
         self.header.draw()
         self.footer.draw()
         self.start_button.draw()
-
