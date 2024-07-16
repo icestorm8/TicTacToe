@@ -28,9 +28,9 @@ class Board:
             return False
 
     def is_full(self) -> bool:
-        return self.__successful_move_count < 9
+        return self.__successful_move_count == 9
 
-    def has_winner(self, player1: Player, player2: Player) -> bool:
+    def has_winner(self, player1: Player, player2: Player) -> Player or None:
         winner = False
         winning_player = None
         # Check the rows
@@ -73,4 +73,4 @@ class Board:
         if winner:
             winning_player.add_point()
 
-        return winner
+        return winning_player

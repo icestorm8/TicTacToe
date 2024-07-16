@@ -24,13 +24,19 @@ class Game:
         self.static_o = pygame.image.load("Assets/O_frames/o_10.png")
         self.static_o = pygame.transform.scale(self.static_o, (self.block_size, self.block_size))
 
+
+        # sounds
+        self.good_move = pygame.mixer.Sound("Assets/Sounds/good.mp3")
+        self.bad_move = pygame.mixer.Sound("Assets/Sounds/bad.mp3")
+
         self.current_player = self.player1
 
         self.screen = screen
         self.running = True
         self.rects: [[pygame.rect]] = [[None, None, None], [None, None, None], [None, None, None]]
-        self.GRID_CLICKED = pygame.USEREVENT + 1
 
+        self.GRID_CLICKED = pygame.USEREVENT + 1
+        self.GAME_OVER = pygame.USEREVENT + 2
         # self.end_screen = EndScreen(self.screen)
         while self.running:
             # Did the user click the window close button?
@@ -38,27 +44,63 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                if event.type == pygame.MOUSEBUTTONUP:
+                elif event.type == pygame.MOUSEBUTTONUP:
                     self.check_collision()
-                if event.type == self.GRID_CLICKED:
+                elif event.type == self.GRID_CLICKED:
                     print(event.position)
                     cell_position = event.position
                     row, col = cell_position
                     # if move was successful - draw the move and switch players
                     # else - draw the error and stay with the same player
                     if self.board_arr.do_move(self.current_player, row, col):
+                        self.good_move.play()
                         self.draw_player(self.current_player, row, col)
                         self.switch_player()
-                # if event.type == self.GAME_OVER:
+                    else:
+                        self.bad_move.play()
+                elif event.type == self.GAME_OVER:
+                    winner = event.winner
+                    if winner is self.player1:
+                        print(f"{self.player1.name} won")
+                    elif winner is self.player2:
+                        print(f"{self.player2.name} won")
+                    else:
+                        print("this was a tie! good job!")
+                    self.running = False
                 #     print("game is over!!!")
                 #     self.running = False
 
+            self.check_board()
             # Fill the background
             self.draw_grid()
             # self.screen.fill((0, 0, 0))
             pygame.display.update()
         # Done! Time to quit.
         # self.end_screen.run(self)
+
+    # this is used to restart the whole game, including the points (player names will stay the same and to change those
+    # user must go to menu
+    def restart_game(self):
+        self.player1.restart()
+        self.player2.restart()
+        self.continue_game()
+
+    # the winner gets a point each round so continue is to keep playing
+    def continue_game(self):
+        self.board_arr = Board()
+        self.running = True
+        self.rects: [[pygame.rect]] = [[None, None, None], [None, None, None], [None, None, None]]
+
+    def check_board(self):
+        winner = self.board_arr.has_winner(self.player1, self.player2)
+        if winner is not None and not self.board_arr.is_full():
+            custom_event = pygame.event.Event(self.GAME_OVER, winner=winner)
+            pygame.event.post(custom_event)
+        elif winner is None and self.board_arr.is_full():
+            custom_event = pygame.event.Event(self.GAME_OVER, winner=None)
+            pygame.event.post(custom_event)
+        else:
+            return
 
     def draw_grid(self):
         # block_size = int(self.screen.get_width()/3)  # Set the size of the grid block
