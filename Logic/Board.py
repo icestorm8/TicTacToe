@@ -9,7 +9,7 @@ class Board:
                                    [EMPTY_CELL, EMPTY_CELL, EMPTY_CELL]]
         self.__successful_move_count = 0
 
-    def is_legal(self, player: chr, row: int, col: int) -> bool:
+    def is_legal(self, row: int, col: int) -> bool:
         if row > 2 or col > 2:
             return False
         elif row < 0 or col < 0:
@@ -17,12 +17,15 @@ class Board:
         elif self.board_arr[row][col] is not EMPTY_CELL:
             return False
         else:
-            self.do_move(player, row, col)
             return True
 
-    def do_move(self, player: chr, row: int, col: int) -> None:
-        self.board_arr[row][col] = player
-        self.__successful_move_count += 1
+    def do_move(self, player: Player, row: int, col: int) -> bool:
+        if self.is_legal(row, col):
+            self.board_arr[row][col] = player.player_char
+            self.__successful_move_count += 1
+            return True
+        else:
+            return False
 
     def is_full(self) -> bool:
         return self.__successful_move_count < 9
