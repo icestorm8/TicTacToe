@@ -24,6 +24,8 @@ class Game:
         self.static_o = pygame.image.load("Assets/O_frames/o_10.png")
         self.static_o = pygame.transform.scale(self.static_o, (self.block_size, self.block_size))
 
+        self.animation_active = True
+        self.x_frame_index = 0
 
         # sounds
         self.good_move = pygame.mixer.Sound("Assets/Sounds/good.mp3")
@@ -34,9 +36,18 @@ class Game:
         self.screen = screen
         self.running = True
         self.rects: [[pygame.rect]] = [[None, None, None], [None, None, None], [None, None, None]]
-
+        self.animation_grid = [[{'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0}],
+                               [{'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0}],
+                               [{'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0}]]
         self.GRID_CLICKED = pygame.USEREVENT + 1
         self.GAME_OVER = pygame.USEREVENT + 2
+        self.UPDATE_ANIMATION = pygame.USEREVENT + 3
         # self.end_screen = EndScreen(self.screen)
         while self.running:
             # Did the user click the window close button?
@@ -58,6 +69,8 @@ class Game:
                         self.switch_player()
                     else:
                         self.bad_move.play()
+                elif event.type == self.UPDATE_ANIMATION:
+                    self.update_animations()
                 elif event.type == self.GAME_OVER:
                     winner = event.winner
                     if winner is self.player1:
@@ -73,6 +86,7 @@ class Game:
             self.check_board()
             # Fill the background
             self.draw_grid()
+
             # self.screen.fill((0, 0, 0))
             pygame.display.update()
         # Done! Time to quit.
@@ -90,6 +104,16 @@ class Game:
         self.board_arr = Board()
         self.running = True
         self.rects: [[pygame.rect]] = [[None, None, None], [None, None, None], [None, None, None]]
+        self.animation_grid = [[{'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0}],
+                               [{'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0}],
+                               [{'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0},
+                                {'animation': None, 'active': False, 'frame_index': 0}]]
+        pygame.time.set_timer(self.UPDATE_ANIMATION, 0)
 
     def check_board(self):
         winner = self.board_arr.has_winner(self.player1, self.player2)
@@ -122,15 +146,55 @@ class Game:
                         custom_event = pygame.event.Event(self.GRID_CLICKED, position=(row, col))
                         pygame.event.post(custom_event)
 
+    # this function updates all animations available. it uses the animation grid that tracks which animation is on and
+    # if its active. this is happening according to the cell and row the user clicked on.
+    # the animation checking is an event that happens any given time, posted by the draw_player method, that starts the
+    # timer. this is so that each animation would start after the move has been done, and will stop after one loop,
+    # living the sign static.
+    def update_animations(self):
+        for row in range(0, len(self.animation_grid)):
+            for col in range(0, len(self.animation_grid[row])):
+                cell = self.animation_grid[row][col]
+                if cell['animation'] is not None:
+                    # print(len(cell['animation']))
+
+                    if cell['active']:
+                        scaled_image = pygame.transform.scale(cell['animation'][cell['frame_index']], (self.block_size, self.block_size))
+                        self.screen.blit(scaled_image,
+                                         (self.rects[row][col]))
+                        print(cell['frame_index'])
+                        cell['frame_index'] += 1
+                        if cell['frame_index'] == len(cell['animation']):
+                            cell['active'] = False  # Animation completed
+                    else:
+                        if cell['animation'] == self.x_frames:
+                            self.screen.blit(self.static_x, self.rects[row][col])
+                        elif cell['animation'] == self.o_frames:
+                            self.screen.blit(self.static_o, self.rects[row][col])
+                        else:
+                            continue
+
+    # this method sets the animation and static image to be played when calling the above function "update_animations"
+    # this way the function above knows which animation to play according to the player who made the move on the
+    # specific cell
     def draw_player(self, player: Player, row, col):
         print(player.name)
+        pygame.time.set_timer(self.UPDATE_ANIMATION, 50)
         if player == self.player1:
             print()
+
             # Blit the image onto the specified rectangle
-            self.screen.blit(self.static_x, self.rects[row][col])
+            # self.screen.blit(self.static_x, self.rects[row][col])
+            self.animation_grid[row][col]['active'] = True
+            self.animation_grid[row][col]['animation'] = self.x_frames
+
+            # self.screen.blit(self.static_x, self.rects[row][col])
+
         else:
+            self.animation_grid[row][col]['active'] = True
+            self.animation_grid[row][col]['animation'] = self.o_frames
             print()
-            self.screen.blit(self.static_o, self.rects[row][col])
+            # self.screen.blit(self.static_o, self.rects[row][col])
 
     def switch_player(self):
         if self.current_player == self.player1:
