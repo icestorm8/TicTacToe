@@ -29,7 +29,7 @@ class Menu:
                     if self.start_button.mouseover():
                         print("starting")
                         Game(self.screen).run()
-            clock = pygame.time.Clock()  # creating a clock for the game
+            # clock = pygame.time.Clock()  # creating a clock for the game
             self.display_text()
 
             pygame.display.update()
@@ -37,6 +37,7 @@ class Menu:
         pygame.quit()
         sys.exit()
 
+    # this function draws the text of the menu
     def display_text(self):
         self.header.draw()
         self.footer.draw()

@@ -6,6 +6,7 @@ from pygame import Vector2
 from Logic.Board import Board
 from Logic.Player import Player
 from UI.EndScreen import EndScreen
+from UI.Text import Text
 
 
 class Game:
@@ -55,35 +56,38 @@ class Game:
 
         self.screen.fill((255, 255, 255))
 
+    # activates the main loop of the game
     def run(self):
+
         self.current_player = self.player1
         while not self.game_over:
-            # Did the user click the window close button?
+            # events
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == pygame.QUIT:  # user clicked on close window
                     pygame.quit()
                     sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.game_over = True
+                elif event.type == pygame.KEYDOWN:  # user pushed a key
+                    if event.key == pygame.K_ESCAPE:  # user pushed escape key
+                        self.game_over = True  # end the game and go back to menu
                         return
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    self.check_collision()
-                elif event.type == self.GRID_CLICKED:
-                    cell_position = event.position
-                    row, col = cell_position
+                elif event.type == pygame.MOUSEBUTTONUP:  # user clicked mouse
+                    self.check_collision()  # check if user clicked on a grid cell
+                elif event.type == self.GRID_CLICKED:  # user clicked the grid
+                    cell_position = event.position  # get the position from the event
+                    row, col = cell_position  # split the tuple
                     # if move was successful - draw the move and switch players
                     # else - draw the error and stay with the same player
                     if self.board_arr.do_move(self.current_player, row, col):
-                        self.good_move.play()
-                        self.draw_player(self.current_player, row, col)
-                        self.switch_player()
+                        self.good_move.play()  # play successful move sound
+                        self.draw_player(self.current_player, row, col)  # draw the players image on the position
+                        # clicked
+                        self.switch_player()  # switch the current player
                     else:
-                        self.bad_move.play()
-                elif event.type == self.UPDATE_ANIMATION:
+                        self.bad_move.play()  # play bad move sound and do nothing
+                elif event.type == self.UPDATE_ANIMATION:  # a move has been made - update the animation accordingly
                     self.update_animations()
-                elif event.type == self.GAME_OVER:
-                    self.winner = event.winner
+                elif event.type == self.GAME_OVER:  # winner was found/ board is full
+                    self.winner = event.winner  # get the winner from the event and act accordingly
                     if self.winner is self.player1:
                         print(f"{self.player1.name} won")
                         self.player1.add_point()
@@ -94,14 +98,14 @@ class Game:
                         print("this was a tie! good job!")
                     self.game_over = True
 
-            self.check_board()
-            self.draw_grid()
-            pygame.display.update()
+            self.check_board()  # check if the game has a winner or is full
+            self.draw_grid()  # draw the grid using the rectangles and push the rectangles to the matrix
+            pygame.display.update()  # update the screen
 
         # Done! Time to quit.
-        action: str = self.endScreen.run(self.winner, self.screen)
-        print(action == "continue")
-        self.screen.fill((255, 255, 255))
+        action: str = self.endScreen.run(self.winner, self.screen)  # end screen returns the option the user chose
+        self.screen.fill((255, 255, 255))  # hide the previous screen
+        # check which action was chosen
         if action == "continue":
             self.continue_game()
         elif action == "restart":
@@ -110,15 +114,13 @@ class Game:
             return
         self.run()
 
-
-    # # this is used to restart the whole game, including the points (player names will stay the same and to change those
-    # # user must go to menu
+    # this function is used to restart the game after it was finished, so that the players points are restarted as well
     def restart_game(self):
         self.continue_game()
         self.player1.restart()
         self.player2.restart()
 
-    # # the winner gets a point each round so continue is to keep playing
+    # this function is used to reset the game, while keeping the players points for each round
     def continue_game(self):
         self.board_arr = Board()
         self.game_over = False
@@ -134,8 +136,8 @@ class Game:
                                 {'animation': None, 'active': False, 'frame_index': 0}]]
         pygame.time.set_timer(self.UPDATE_ANIMATION, 0)
 
-
-
+    # used to check if there is a winner already or if the board is full. it posts the "GAME_OVER" event with the
+    # winner details
     def check_board(self):
         winner = self.board_arr.has_winner(self.player1, self.player2)
         if winner is not None and not self.board_arr.is_full():
@@ -158,6 +160,10 @@ class Game:
                 # print(f"[{x}, {y}]")
                 self.rects[x][y] = rect
 
+    # used to check if a player clicked a certain cell in the grid, by checking a collide point with each rectangle
+    # that builds the grid itself. if there was a collision, the event is fired, using the "GRID_CLICKED" event and
+    # adding to it the position the user clicked on (in the matrix, not on the screem)
+    # it is called when a user clicks!
     def check_collision(self):
         pos = pygame.mouse.get_pos()
         for row in range(0, 3):
@@ -200,24 +206,16 @@ class Game:
     # this way the function above knows which animation to play according to the player who made the move on the
     # specific cell
     def draw_player(self, player: Player, row, col):
-        print(player.name)
         pygame.time.set_timer(self.UPDATE_ANIMATION, 50)
         if player == self.player1:
-            print()
-
-            # Blit the image onto the specified rectangle
-            # self.screen.blit(self.static_x, self.rects[row][col])
             self.animation_grid[row][col]['active'] = True
             self.animation_grid[row][col]['animation'] = self.x_frames
-
-            # self.screen.blit(self.static_x, self.rects[row][col])
-
         else:
             self.animation_grid[row][col]['active'] = True
             self.animation_grid[row][col]['animation'] = self.o_frames
-            print()
-            # self.screen.blit(self.static_o, self.rects[row][col])
 
+    # switches the current player to be the other player. it is called only after the current player did a
+    # successful move
     def switch_player(self):
         if self.current_player == self.player1:
             self.current_player = self.player2

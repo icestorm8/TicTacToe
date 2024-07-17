@@ -11,6 +11,7 @@ class Text:
         self.color = color
         self.text_render_rect = None
 
+    # this function displays the text object on the screen
     def draw(self):
         text_surface = self.font.render(self.text, True, self.color)
         self.text_render_rect = text_surface.get_rect(
@@ -20,6 +21,7 @@ class Text:
                      2 + self.y))
         self.screen.blit(text_surface, self.text_render_rect)
 
+    # this function checks if the mouse is hovering the text object
     def mouseover(self):
         # this function will return true if mouse is on the button
         pos = pygame.mouse.get_pos()

@@ -22,6 +22,7 @@ class EndScreen:
         self.player2 = player2
         self.running = False
 
+    # used to draw the elements on the screen, according to the winner if there was one
     def draw_elements(self, screen):
         if self.winner is None:
             self.text = Text(0, -300, screen, "THAT'S A TIE! GOOD JOB!", 60)
@@ -40,6 +41,7 @@ class EndScreen:
         self.continue_button.draw(self.screen, True)
         self.menu_button.draw(self.screen, True)
 
+    # sets the winner, starts the main loop of the end screen. returns strings according to choice of the player
     def run(self, winner, screen):
         self.running = True
         self.winner = winner
