@@ -1,27 +1,25 @@
 import sys
 
 import pygame
-from pygame import Vector2
 
 from Logic.Board import Board
 from Logic.Player import Player
 from UI.EndScreen import EndScreen
-from UI.Text import Text
 
 
 class Game:
-    def __init__(self, screen, player1: Player = Player("X", "player1"), player2: Player = Player("O", "player2")):
+    def __init__(self, screen, player1: Player = None, player2: Player = None):
         self.board_arr = Board()
         self.block_size = int(screen.get_width() / 3)
         # players:
         # player 1 = X
-        self.player1 = player1
+        self.player1 = player1 or Player("X", "player1")
         self.x_frames = [pygame.image.load(f'Assets/X_frames/x_{i}.png') for i in range(0, 9)]
         self.static_x = pygame.image.load("Assets/X_frames/x_8.png")
         self.static_x = pygame.transform.scale(self.static_x, (self.block_size, self.block_size))
 
         # player 2 = O
-        self.player2 = player2
+        self.player2 = player2 or Player("Y", "player2")
         self.o_frames = [pygame.image.load(f'Assets/O_frames/o_{i}.png') for i in range(0, 11)]
         self.static_o = pygame.image.load("Assets/O_frames/o_10.png")
         self.static_o = pygame.transform.scale(self.static_o, (self.block_size, self.block_size))
@@ -29,6 +27,7 @@ class Game:
         # sounds
         self.good_move = pygame.mixer.Sound("Assets/Sounds/good.mp3")
         self.bad_move = pygame.mixer.Sound("Assets/Sounds/bad.mp3")
+        self.win = pygame.mixer.Sound("Assets/Sounds/win.mp3")
 
         # grids
         self.rects: [[pygame.rect]] = [[None, None, None], [None, None, None], [None, None, None]]
@@ -96,6 +95,7 @@ class Game:
                         self.player2.add_point()
                     else:
                         print("this was a tie! good job!")
+                    self.win.play()
                     self.game_over = True
 
             self.check_board()  # check if the game has a winner or is full
@@ -135,6 +135,7 @@ class Game:
                                 {'animation': None, 'active': False, 'frame_index': 0},
                                 {'animation': None, 'active': False, 'frame_index': 0}]]
         pygame.time.set_timer(self.UPDATE_ANIMATION, 0)
+
 
     # used to check if there is a winner already or if the board is full. it posts the "GAME_OVER" event with the
     # winner details
